@@ -1,0 +1,227 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8" /> 
+		<title>Cefeteria's NF</title>
+
+		<link rel="stylesheet" type="text/css" href="./css/css.css" />
+		<script src="./js/produtos.js"></script>
+		<script type="text/javascript" src="./js/jquery.min.js"></script>
+
+		<script>		
+		
+			var pedidos = [];
+
+			$(function(){
+			
+				$("#btn-novoProduto").click(function(){
+					
+					var nomeNovoProd=$("#nome-novoProduto").val();
+					var existeProduto=false;
+					//se o produto já existe
+					$.each(produtos, function(i, prod){
+						
+							if(nomeNovoProd==prod.item){
+								existeProduto=true;
+								$("#formulario-div").append(
+														$("<p/>").text("Já existe esse item no Cardápio!")
+								);	
+							}
+						
+					});
+					//se não existe
+					if(existeProduto==false){
+						var precoProd=$("#preco-novoProduto").val();
+						precoProd=precoProd.replace(",", ".");						
+						novoProd = {
+							"id":produtos.length + 1,
+							"item": nomeNovoProd,
+							"preco": precoProd
+						};			
+						produtos.push(novoProd);
+						$("#menu")
+							.append($("<option />")
+								.attr("value", novoProd.id)
+								.text(novoProd.item + " - " + novoProd.preco)
+							);				
+					}
+				});
+			
+
+					$.each(produtos, function(indice, elemento){
+						$("#menu")
+								.append($("<option />")
+									.attr("value", elemento.id)
+									.text(elemento.item + " - " + elemento.preco)
+								);						
+							
+					});
+	
+				
+				$("#menu option").click(function(){
+					var itemArray = $(this).text().split(" - ");
+					var itemEscolhido = itemArray[0];					
+					var itemPreco = itemArray[1];
+
+					
+					itemPreco = itemPreco.substring(2, itemPreco.length);
+					
+					pedido = {
+								"id": $(this).attr("value"), 
+								"nome":itemEscolhido,
+								"valorUnitario": itemPreco, 
+								"quantidade": "1",
+								"valorTotal": function(){
+									return this.valorUnitario * this.quantidade;
+								}
+					};
+
+					var existeItem = false;
+					$.each(pedidos, function(indice, item){
+						if(item.id == pedido.id) {
+							item.quantidade = parseInt(item.quantidade) + 1;//parseInt retornará a quantidade pré-existente. Ela é necessária para a soma
+							existeItem = true;
+						}
+					});
+
+					if(!existeItem) {
+						pedidos.push(pedido); 
+					}
+					
+					carregarPedidos();
+					
+				});
+
+				$("#pedidos").on("click", ".lixeira" ,function(){
+					
+					$("#valor-total").text(0);  
+					$("#preco-total").val(0);
+					var pedidoId = $(this).parents("tr").attr("id");
+
+					$.each(pedidos, function(indice, item) {
+						console.log(indice+ " - " +item.nome);
+						if(item.id == pedidoId) {
+							pedidos.splice(indice, 1);//adiciona item após o indice
+						}
+					});
+
+					$(this).parents("tbody").empty();
+					carregarPedidos();
+				});
+				
+				$("#formulario-div").hide();
+				$("#pedidos").hide();
+				$("#fecha2").hide();
+				$(".col-md-4").hide();
+				
+				$("#formulario").click(function(){
+					$("#formulario-div").fadeIn();
+				});
+				
+				$("#menu-bt").click(function(){
+					$(".col-md-4").fadeIn();
+					
+				});
+				
+				$("#peCa-bt").click(function(){
+					$("#pedidos").fadeIn();
+					$("#fecha2").fadeIn();
+				});
+				
+				//botao fechar
+				var span = document.getElementById("fecha1");
+				span.onclick = function() {
+					$(".col-md-4").hide();
+					
+				}				
+				var span = document.getElementById("fecha2");
+				span.onclick = function() {
+					$("#pedidos").hide();
+					$("#fecha2").hide();
+				}
+				var span = document.getElementById("fecha3");
+				span.onclick = function() {
+					$("#formulario-div").hide();
+				}
+				
+				
+				$("#apagarPedido").click(function(){
+					$("tbody").empty();
+					$("tbody").append($("<tr />")
+										.append($("<td />")
+											.attr("colspan", "5")
+											.text("Nenhum item Pedido")
+										)
+								);
+					$("#valor-total").text(0);
+					
+					pedidos=[];
+					
+				});
+				
+			});
+		
+			
+		</script>
+	</head>
+	<body>
+		<nav id="dropdown">
+			<img src="./img/nav.png"/>
+			<ul id="dropdown-content">
+				<li id="menu-bt" class="btn btn-primary btn-sm">Cardápio</li>
+				<li id="peCa-bt" class="btn btn-primary btn-sm">Pedido</li>
+				<li id="formulario">Novo Produto</li>
+			</ul>
+		</nav>
+		<div id="formulario-div">
+			<span class="close" id="fecha3">&times;</span>
+			<p>Preencha os campos a seguir para cadastrar o novo produto</p>
+			<input type="text" id="nome-novoProduto" placeholder="Digite o nome do produto"/><br/>
+			<input type="number" id="preco-novoProduto" placeholder="Digite o preço(R$)" /><br/>
+			<button id="btn-novoProduto">Cadastrar</button>		
+		</div>
+		<div id="logo">
+			<h1>Cefeteria</h1>
+			<p> A cafeteria mais cefetiana de Nova Friburgo </p>
+			<img src="./img/modal.gif" />
+		</div>
+		
+	
+		
+		<div class="col-md-4">
+			
+			<span class="close" id="fecha1">&times;</span>
+			<p>Clique para adicionar ao seu pedido</p>
+			<select id="menu" size="10" class="form-control">
+			
+			</select>
+			
+		</div>
+		
+		<div style="clear:both"></div>
+		
+		<span class="close" id="fecha2">&times;</span>
+		<table id="pedidos" class="table">
+			<thead>
+				<th>Itens</th>
+				<th>Quantidade</th>
+				<th>Preço Unitário</th>
+				<th>Total</th>
+				<th style="width:200px"></th>
+			</thead>
+			<tbody>
+				<tr>
+					<td id="nenhum-item" colspan="5">
+						Nenhum item pedido
+					</td>
+				</tr>
+			</tbody>
+			<tfoot>
+				<th colspan="3">Total</th>
+				<th id="valor-total">0</th>
+				
+				<th><button id="apagarPedido">Apagar Tudo</button></th>
+			</tfoot>
+		</table>
+	</body>
+</html>
